@@ -33,62 +33,142 @@
   TAGS.field.forEach((t) => (TAG[t.id] = { ...t, kind: "field" }));
 
   // Everyday words people type, mapped to tag ids.
+  // Words that carry no meaning in a search.
+  const STOPWORDS = new Set(("a an and are as at be by for from in into is it of on or the to was were who whose " +
+    "with that this these those people person leaders leader famous about like me my some any all").split(" "));
+
+  // Multi-word phrases, rewritten before the query is split into words.
+  const PHRASES = [
+    [/\bpeople of colou?r\b|\bpersons? of colou?r\b/g, "bipoc"],
+    [/\bafrican[ -]americans?\b/g, "black"],
+    [/\bnative americans?\b|\bfirst nations\b|\bamerican indians?\b/g, "indigenous"],
+    [/\bnative hawaiians?\b/g, "indigenous aapi"],
+    [/\bpacific islanders?\b|\basian[ -]americans?\b/g, "aapi"],
+    [/\bmiddle eastern\b|\bnorth african\b/g, "mena"],
+    [/\bcivil rights\b|\bsocial justice\b|\bhuman rights\b/g, "activism"],
+    [/\bcomputer scien\w*|\bsoftware\b|\bcoding\b|\bprogramm\w*/g, "technology"],
+    [/\bvisual arts?\b/g, "arts"],
+    [/\bfilm (?:and|&) tv\b|\btelevision\b|\bmovies?\b/g, "film"],
+    [/\blittle (?:people|persons?)\b/g, "little-people"],
+    [/\bage[ -]inclusive\b|\blate bloomers?\b/g, "age-inclusive"],
+    [/\bnon[ -]binary\b/g, "nonbinary"],
+    [/\bdown syndrome\b|\bwheelchair users?\b/g, "disabled"]
+  ];
+
+  // Single words people type, mapped to a tag id (or several, any of which counts).
   const SYNONYMS = {
-    woman: "women", female: "women", girl: "women", girls: "women", she: "women",
-    latina: "latine", latino: "latine", latinx: "latine", hispanic: "latine", mexican: "latine",
-    asian: "aapi", "pacific": "aapi", chinese: "aapi", japanese: "aapi", korean: "aapi", filipino: "aapi",
-    native: "indigenous", "first-nations": "indigenous", cherokee: "indigenous",
-    african: "black", "african-american": "black", poc: "bipoc", "people-of-color": "bipoc",
-    arab: "mena", "middle-eastern": "mena",
-    gay: "lgbtq", lesbian: "lgbtq", bisexual: "lgbtq", queer: "lgbtq",
+    latina: "latine", latino: "latine", latinx: "latine", latinas: "latine", latinos: "latine", hispanic: "latine", mexican: "latine",
+    asian: "aapi", chinese: "aapi", japanese: "aapi", korean: "aapi", filipino: "aapi", indian: "aapi",
+    native: "indigenous", cherokee: "indigenous", hawaiian: "indigenous",
+    african: "black", poc: "bipoc",
+    arab: "mena", egyptian: "mena", iranian: "mena",
+    gay: "lgbtq", lesbian: "lgbtq", bisexual: "lgbtq", queer: "lgbtq", lgbt: "lgbtq", lgbtqia: "lgbtq",
     trans: "transgender",
-    autistic: "neurodivergent", autism: "neurodivergent", adhd: "neurodivergent", dyslexic: "neurodivergent",
-    disability: "disabled", deaf: "disabled", blind: "disabled",
+    autistic: "neurodivergent", autism: "neurodivergent", adhd: "neurodivergent", dyslexic: "neurodivergent", dyslexia: "neurodivergent",
+    disability: "disabled", disabilities: "disabled", deaf: "disabled", blind: "disabled",
     dwarf: "little-people", dwarfism: "little-people", achondroplasia: "little-people",
-    maths: "math", mathematics: "math", stem: "science", tech: "technology", computers: "technology",
-    art: "arts", artist: "arts", painter: "arts", dancer: "dance", ballet: "dance", singer: "music", composer: "music", writer: "literature", author: "literature", poet: "literature",
-    athlete: "sports", astronaut: "space", nasa: "space", doctor: "medicine", civil: "activism", rights: "activism"
+    immigrants: "immigrant", refugee: "immigrant", refugees: "immigrant",
+    maths: "math", mathematics: "math", mathematician: "math", tech: "technology",
+    code: "technology", coder: "technology", coders: "technology", coding: "technology", programmer: "technology", programmers: "technology",
+    stem: ["science", "technology", "engineering", "math", "medicine", "space"], steam: ["science", "technology", "engineering", "arts", "math"], computer: "technology", computers: "technology",
+    art: "arts", artist: "arts", painter: "arts", dancer: "dance", ballet: "dance", singer: "music", composer: "music",
+    writer: "literature", author: "literature", poet: "literature", poetry: "literature", books: "literature",
+    athlete: "sports", athletes: "sports", olympics: "sports", olympian: "sports",
+    nasa: "space", pilot: "aviation", doctor: "medicine", doctors: "medicine",
+    inventor: "engineering", inventors: "engineering", lawyer: "law", judge: "law", government: "politics"
+  };
+
+  // Gender words are matched against the pronouns in each bio ("he", "she", "they"),
+  // because there's no tag for men. "Women" words also match the women tag.
+  // Words that name both a tag and a gender, e.g. "latina" = latine + she.
+  const GENDERED_SYNONYMS = { latina: "she", latinas: "she", latino: "he", latinos: null };
+
+  const GENDER_WORDS = {
+    men: "he", man: "he", male: "he", males: "he", boy: "he", boys: "he", guy: "he", guys: "he",
+    women: "she", woman: "she", female: "she", females: "she", girl: "she", girls: "she", lady: "she", ladies: "she"
   };
 
   const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const nameKey = (s) => norm(s).replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  const words = (s) => norm(s).split(/[^a-z0-9+-]+/).filter(Boolean);
+
+  // "he", "she" or "they", from the pronouns field or the bio; null if the bio doesn't say.
+  function pronounOf(l) {
+    if (l.pronouns) return norm(l.pronouns).split("/")[0];
+    const counts = { he: 0, she: 0, they: 0 };
+    for (const w of words(l.bio)) {
+      if (w === "he" || w === "him" || w === "his" || w === "himself") counts.he++;
+      else if (w === "she" || w === "her" || w === "hers" || w === "herself") counts.she++;
+      else if (w === "they" || w === "them" || w === "their" || w === "themselves") counts.they++;
+    }
+    const best = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return counts[best] ? best : null;
+  }
 
   function haystack(l) {
-    const tagWords = [...(l.identity || []), ...(l.field || [])].map((id) => id + " " + (TAG[id] ? TAG[id].label : "")).join(" ");
+    const tagIds = [...(l.identity || []), ...(l.field || [])];
     return {
-      name: norm(l.name),
-      roles: norm((l.roles || []).join(" ")),
-      tags: norm(tagWords),
-      bio: norm(l.bio)
+      name: words(l.name),
+      roles: words((l.roles || []).join(" ")),
+      tagIds: new Set(tagIds),
+      tagWords: tagIds.flatMap((id) => words(id + " " + (TAG[id] ? TAG[id].label : ""))),
+      bio: words(l.bio),
+      pronoun: pronounOf(l)
     };
   }
   const HAY = new Map(LEADERS.map((l) => [l.id, haystack(l)]));
 
+  // Turn a typed query into search terms.
+  function queryTerms(q) {
+    let text = norm(q);
+    for (const [re, rep] of PHRASES) text = text.replace(re, " " + rep + " ");
+    return words(text).filter((w) => !STOPWORDS.has(w)).map((w) => {
+      if (GENDER_WORDS[w]) return { word: w, gender: GENDER_WORDS[w] };
+      if (TAG[w] || SYNONYMS[w]) return { word: w, tags: [].concat(TAG[w] ? w : SYNONYMS[w]), gender: GENDERED_SYNONYMS[w] || null };
+      // Simple plurals: "astronauts" -> "astronaut", "activities" -> "activity".
+      const stem = w.length > 4 && w.endsWith("ies") ? w.slice(0, -3) + "y"
+        : w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w;
+      const mapped = SYNONYMS[stem] || (TAG[stem] ? stem : null);
+      return { word: stem, tags: mapped ? [].concat(mapped) : [] };
+    });
+  }
+
+  // How strongly one term matches one leader (0 = not at all).
+  function termScore(term, h) {
+    const starts = (list) => list.some((w) => w === term.word || (term.word.length > 2 && w.startsWith(term.word)));
+    const genderOk = (g) => g === "she" ? h.tagIds.has("women") || h.pronoun === "she" : h.pronoun === g;
+    if (term.gender && !(term.tags || []).length) return genderOk(term.gender) ? 2 : 0;
+    if (term.gender && !genderOk(term.gender)) return 0;
+    let s = 0;
+    if (term.tags.some((t) => h.tagIds.has(t))) s = 4;
+    if (starts(h.name)) s = Math.max(s, 6);
+    if (starts(h.tagWords)) s = Math.max(s, 4);
+    if (starts(h.roles)) s = Math.max(s, 3);
+    if (starts(h.bio)) s = Math.max(s, 1);
+    return s;
+  }
+
+  // Returns matching leaders. If nobody matches every word, returns the closest
+  // matches instead and marks the list with .partial = true.
   function search({ q = "", tags = [], sort = "relevance" }) {
-    const tokens = norm(q).split(/\s+/).filter(Boolean);
-    let results = [];
-    for (const l of LEADERS) {
+    const terms = queryTerms(q);
+    const pool = LEADERS.filter((l) => {
       const all = [...(l.identity || []), ...(l.field || [])];
-      if (!tags.every((t) => all.includes(t))) continue;
+      return tags.every((t) => all.includes(t));
+    });
+    const scored = pool.map((l) => {
       const h = HAY.get(l.id);
-      let score = 0;
-      let ok = true;
-      for (const tok of tokens) {
-        const alts = [tok, SYNONYMS[tok]].filter(Boolean);
-        let s = 0;
-        for (const a of alts) {
-          if (h.name.includes(a)) s = Math.max(s, 5);
-          if (h.tags.includes(a)) s = Math.max(s, 3);
-          if (h.roles.includes(a)) s = Math.max(s, 3);
-          if (h.bio.includes(a)) s = Math.max(s, 1);
-        }
-        if (!s) { ok = false; break; }
-        score += s;
-      }
-      if (ok) results.push({ l, score });
+      const per = terms.map((t) => termScore(t, h));
+      return { l, score: per.reduce((a, b) => a + b, 0), hits: per.filter(Boolean).length };
+    });
+    let results = scored.filter((r) => r.hits === terms.length);
+    let partial = false;
+    if (!results.length && terms.length > 1) {
+      results = scored.filter((r) => r.hits > 0);
+      partial = results.length > 0;
     }
     const byName = (a, b) => lastName(a.l).localeCompare(lastName(b.l));
-    if (sort === "name" || (sort === "relevance" && !tokens.length)) results.sort(byName);
+    if (sort === "name" || (sort === "relevance" && !terms.length)) results.sort(byName);
     else if (sort === "oldest" || sort === "newest") {
       // People without a known birth year always go last, in name order.
       const dir = sort === "oldest" ? 1 : -1;
@@ -100,8 +180,10 @@
         return dir * (ya - yb) || byName(a, b);
       });
     }
-    else results.sort((a, b) => b.score - a.score || byName(a, b));
-    return results.map((r) => r.l);
+    else results.sort((a, b) => b.hits - a.hits || b.score - a.score || byName(a, b));
+    const list = results.map((r) => r.l);
+    list.partial = partial;
+    return list;
   }
 
   function lastName(l) {
@@ -558,9 +640,9 @@
           });
           const list = state.letter ? matches.filter((l) => firstLetter(l) === state.letter) : matches;
           const filtered = state.q || state.tags.length || state.letter;
-          $("#count").textContent = LEADERS.length
-            ? `${list.length} ${list.length === 1 ? "leader" : "leaders"}${filtered ? " found" : ""}`
-            : "";
+          $("#count").textContent = !LEADERS.length ? ""
+            : matches.partial ? `No one matches every word. Showing ${list.length} close ${list.length === 1 ? "match" : "matches"}.`
+            : `${list.length} ${list.length === 1 ? "leader" : "leaders"}${filtered ? " found" : ""}`;
           ["identity", "field"].forEach((k) => {
             const n = state.tags.filter((t) => TAG[t].kind === k).length;
             $(`[data-count="${k}"]`).textContent = n ? n : "";

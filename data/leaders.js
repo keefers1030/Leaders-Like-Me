@@ -1644,7 +1644,7 @@ window.LLM_LEADERS = [
     "field": [
       "activism"
     ],
-    "bio": "Cesar Chavez was a Mexican American labor leader who co-founded the National Farm Workers Association with Dolores Huerta and Gilbert Padilla. It became the United Farm Workers, which fought for better pay and conditions for farmworkers.",
+    "bio": "Cesar Chavez was a Mexican American labor leader. With Dolores Huerta and Gilbert Padilla, he co-founded the National Farm Workers Association, which became the United Farm Workers and fought for better pay and conditions for farmworkers.",
     "links": [
       {
         "label": "Wikipedia",
@@ -3457,7 +3457,7 @@ window.LLM_LEADERS = [
       "science",
       "education"
     ],
-    "bio": "Temple Grandin is an autistic professor of animal science who redesigned livestock handling to be more humane and has become one of the best-known voices on autism.",
+    "bio": "Temple Grandin is an autistic professor of animal science. She redesigned livestock handling to be more humane and has become one of the best-known voices on autism.",
     "links": [
       {
         "label": "Official site",
@@ -4582,7 +4582,7 @@ window.LLM_LEADERS = [
       "sports",
       "business"
     ],
-    "bio": "Dwayne “The Rock” Johnson, who has Black and Samoan heritage, is a former college football player and pro wrestler who became one of the highest-earning movie stars in the world.",
+    "bio": "Dwayne “The Rock” Johnson, who has Black and Samoan heritage, played college football and became a pro wrestler before he grew into one of the highest-earning movie stars in the world.",
     "links": [
       {
         "label": "Wikipedia",
@@ -6301,6 +6301,7 @@ window.LLM_LEADERS = [
   {
     "id": "janelle-monae",
     "name": "Janelle Monáe",
+    "pronouns": "they/she",
     "born": 1985,
     "died": null,
     "roles": [
@@ -6792,7 +6793,7 @@ window.LLM_LEADERS = [
       "math",
       "education"
     ],
-    "bio": "Abraham Nemeth was a blind mathematician and professor who created Nemeth Braille, a code that lets blind people read and write math. It is still used today.",
+    "bio": "Abraham Nemeth was a blind mathematician and professor. He created Nemeth Braille, a code that lets blind people read and write math, and it is still used today.",
     "links": [
       {
         "label": "APH Hall of Fame",
@@ -7928,7 +7929,7 @@ window.LLM_LEADERS = [
       "activism",
       "education"
     ],
-    "bio": "Ed Roberts was the first wheelchair user to attend the University of California, Berkeley, and a pioneering leader of the disability rights movement.",
+    "bio": "Ed Roberts was a pioneering leader of the disability rights movement. He was the first wheelchair user to attend the University of California, Berkeley.",
     "links": [
       {
         "label": "Wikipedia",
@@ -8270,7 +8271,7 @@ window.LLM_LEADERS = [
       "education",
       "history"
     ],
-    "bio": "Sequoyah was a Cherokee polymath who created a writing system for the Cherokee language, completed in 1821. Within 25 years almost every Cherokee person could read and write.",
+    "bio": "Sequoyah was a Cherokee polymath. He created a writing system for the Cherokee language, completed in 1821, and within 25 years almost every Cherokee person could read and write.",
     "links": [
       {
         "label": "Wikipedia",
@@ -9699,7 +9700,7 @@ window.LLM_LEADERS = [
     "field": [
       "science"
     ],
-    "bio": "Chien-Shiung Wu was a Chinese American physicist whose famous 1956 experiment showed that a basic law of physics, the conservation of parity, does not always hold.",
+    "bio": "Chien-Shiung Wu was a Chinese American physicist. Her famous 1956 experiment showed that a basic law of physics, the conservation of parity, does not always hold.",
     "links": [
       {
         "label": "Wikipedia",
