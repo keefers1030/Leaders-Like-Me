@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- The link-preview image (og-image.png). Regenerate with:
+     python3 data/source/make_previews.py -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Delius+Swash+Caps&family=Montserrat:wght@300;500;600&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden;
+    font-family: "Montserrat", sans-serif; color: #fff;
+    background: linear-gradient(140deg, #2e3a56 0%, #252a38 42%, #5f323d 82%, #5f314b 100%);
+    display: grid; grid-template-columns: 420px 1fr; align-items: center;
+    box-sizing: border-box; padding: 0 72px 0 56px; position: relative;
+  }
+  .decor { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(255,255,255,0.06); }
+  .logo { width: 400px; position: relative; }
+  .text { position: relative; padding-left: 16px; }
+  h1 { margin: 0; font-weight: 300; font-size: 64px; line-height: 1.12; letter-spacing: 0.01em; }
+  h1 em { font-family: "Delius Swash Caps", cursive; font-style: normal; }
+  p { margin: 22px 0 0; font-size: 26px; font-weight: 300; line-height: 1.4; color: rgba(255,255,255,0.88); }
+  .tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .tag { padding: 7px 18px; border-radius: 999px; font-size: 21px; font-weight: 500; color: #1f2433; }
+  .id { background: #80d19b; } .fd { background: #5bc6e8; }
+  .foot { margin-top: 30px; font-size: 20px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #f8d1bc; }
+</style>
+</head>
+<body>
+  <svg class="decor" viewBox="0 0 1200 630" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M700 -40 L1000 -120 L1180 260 L900 250 Z" fill="none" stroke="currentColor" stroke-width="10"/>
+    <polyline points="860,560 920,520 960,575 1010,530 1050,580 1110,535" fill="none" stroke="currentColor" stroke-width="9"/>
+  </svg>
+  <img class="logo" src="../../logo.svg" alt="">
+  <div class="text">
+    <h1>Find leaders who look like <em>you</em>.</h1>
+    <p>Scientists, artists, activists and more who aren't the usual faces in the textbook.</p>
+    <div class="tags">
+      <span class="tag id">women</span><span class="tag id">black</span><span class="tag id">latine</span>
+      <span class="tag id">AAPI</span><span class="tag id">indigenous</span><span class="tag id">LGBTQ+</span>
+      <span class="tag fd">science</span><span class="tag fd">sports</span><span class="tag fd">music</span>
+    </div>
+    <div class="foot">Free · No ads · For classrooms</div>
+  </div>
+</body>
+</html>
